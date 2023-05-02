@@ -1,14 +1,43 @@
 const express = require("express");
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const bcrypt = require('bcrypt');
 const saltRounds = 12;
 
 const port = process.env.PORT || 3005;//Childish Gambino
 
 const app = express();
-app.use(express.urlencoded({extended: false}));
+
+const expireTime = 60 * 60 * 1000; //expires after 1 hour  (hours * minutes * seconds * millis)
+
 
 //Users and Passwords (in memory 'database')
 var users = []; 
+
+/* secret information section */
+const mongodb_user = "joseph2702";
+const mongodb_password = "Trooper27";
+const mongodb_session_secret = "10fc91a3-15d8-4739-a68b-8c4c640cf8ca";
+
+const node_session_secret = "6aaa80f4-2f2d-45e7-9a16-44b7e60efb4c";
+/* END secret section */
+
+app.use(express.urlencoded({extended: false}));
+
+var mongoStore = MongoStore.create({
+	mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@joescluster1.frlz0mu.mongodb.net/?retryWrites=true&w=majority`,
+    crypto: {
+		secret: mongodb_session_secret
+	}
+})
+
+app.use(session({ 
+    secret: node_session_secret,
+	store: mongoStore, //default is memory store 
+	saveUninitialized: false, 
+	resave: true
+}
+));
 
 app.get("/", (req, res) => {
     res.send("<h1>Joseph's website</h1>");
@@ -67,7 +96,20 @@ app.post('/submitEmail', (req,res) => {
 
 app.get('/createUser', (req,res) => {
     var html = `
+    create user
     <form action='/submitUser' method='post'>
+    <input name='username' type='text' placeholder='username'>
+    <input name='password' type='password' placeholder='password'>
+    <button>Submit</button>
+    </form>
+    `;
+    res.send(html);
+});
+
+app.get('/login', (req,res) => {
+    var html = `
+    log in
+    <form action='/loggingin' method='post'>
     <input name='username' type='text' placeholder='username'>
     <input name='password' type='password' placeholder='password'>
     <button>Submit</button>
@@ -92,6 +134,40 @@ app.post('/submitUser', (req,res) => {
     }
 
     var html = "<ul>" + usershtml + "</ul>";
+    res.send(html);
+});
+
+app.post('/loggingin', (req,res) => {
+    var username = req.body.username;
+    var password = req.body.password;
+
+    var usershtml = "";
+    for (i = 0; i < users.length; i++) {
+        if (users[i].username == username) {
+            if (bcrypt.compareSync(password, users[i].password)) {
+                req.session.authenticated = true;
+                req.session.username = username;
+                req.session.cookie.maxAge = expireTime;
+
+                res.redirect('/loggedIn');
+                return;
+            }
+        }
+    }
+
+    //user and password combination not found
+    res.redirect("/login");
+});
+
+app.get('/loggedin', (req,res) => {
+    if (!req.session.authenticated) {
+        res.redirect('/login');
+    }
+    var html = 
+    "You are logged in!"
+    + " <form action='/redirectToHome' method='post'>"
+    + "<button>Go Back Home </button>"
+    + "</form>";
     res.send(html);
 });
 
