@@ -6,7 +6,7 @@ const MongoStore = require('connect-mongo');
 const bcrypt = require('bcrypt');
 const saltRounds = 12;
 
-const port = process.env.PORT || 3003;//Childish Gambino
+const port = process.env.PORT || 3005;//Childish Gambino
 
 const app = express();
 
@@ -42,7 +42,35 @@ app.use(session({
 ));
 
 app.get("/", (req, res) => {
-    var html = `
+
+    var email = req.body.email;
+    var password = req.body.password;
+
+    var usershtml = "";
+    for (i = 0; i < users.length; i++) {
+        if (users[i].email == email) {
+            if (bcrypt.compareSync(password, users[i].password)) {
+                req.session.authenticated = true;
+                req.session.email = email;
+                req.session.cookie.maxAge = expireTime;
+
+
+                var loggedhtml = `
+                <form action='/members' method='get'>
+                    <button>Go to members area</button>
+                </form>
+                <form action='/logout' method='get'>
+                    <button>Log out</button>
+                </form>
+                `;
+
+                res.send(loggedhtml)
+                return;
+            }
+        }
+    }
+
+    var notloggedhtml = `
     <form action='/signup' method='get'>
         <button>Sign up</button>
     </form>
@@ -50,19 +78,80 @@ app.get("/", (req, res) => {
         <button>Log in</button>
     </form>
     `;
-    res.send(html);
+    res.send(notloggedhtml);
 });
 
 app.get("/signup", (req, res) => {
+    var missingname= req.query.non;
+    var missingEmail = req.query.noe;
+    var missingpass= req.query.nop;
     var html = `
-    signup dummy text
+    create user
+    <form action='/submitsignup' method='post'>
+    <input name='name' type='text' placeholder='name'>
+    <input name='email' type='text' placeholder='email'>
+    <input name='password' type='password' placeholder='password'>
+    <button>Submit</button>
+    </form>
     `;
+    if (missingname) {
+        html += "<br> name is required";
+    }
+    if (missingEmail) {
+        html += "<br> email is required";
+    }
+    if (missingpass) {
+        html += "<br> pass is required";
+    }
     res.send(html);
+
+    
+
+
 });
 
-app.get("/login", (req, res) => {
+app.post('/submitsignup', (req,res) => {
+    var name = req.body.name;
+    var email = req.body.email;
+    var password = req.body.password;
+    if (!name) {
+        res.redirect('/signup?non=1');
+    }
+    if (!email) {
+        res.redirect('/signup?noe=1');
+    }
+    if (!password) {
+        res.redirect('/signup?nop=1');
+    }
+    // else {
+    //     res.send("Thanks for subscribing with your email: "+email);
+    // }
+
+    var hashedPassword = bcrypt.hashSync(password, saltRounds);
+
+    users.push({ email: email, password: hashedPassword });
+
+    console.log(users);
+
+    var usershtml = "";
+    for (i = 0; i < users.length; i++) {
+        usershtml += "<li>" + users[i].email + ": " + users[i].password + "</li>";
+    }
+
+    var html = "<ul>" + usershtml + "</ul>";
+    res.send(html);
+
+
+});
+
+app.get('/login', (req,res) => {
     var html = `
-    login dummy text
+    log in
+    <form action='/loggingin' method='post'>
+    <input name='email' type='text' placeholder='email'>
+    <input name='password' type='password' placeholder='password'>
+    <button>Submit</button>
+    </form>
     `;
     res.send(html);
 });
@@ -123,7 +212,7 @@ app.get('/createUser', (req,res) => {
     var html = `
     create user
     <form action='/submitUser' method='post'>
-    <input name='username' type='text' placeholder='username'>
+    <input name='email' type='text' placeholder='email'>
     <input name='password' type='password' placeholder='password'>
     <button>Submit</button>
     </form>
@@ -131,32 +220,22 @@ app.get('/createUser', (req,res) => {
     res.send(html);
 });
 
-app.get('/login', (req,res) => {
-    var html = `
-    log in
-    <form action='/loggingin' method='post'>
-    <input name='username' type='text' placeholder='username'>
-    <input name='password' type='password' placeholder='password'>
-    <button>Submit</button>
-    </form>
-    `;
-    res.send(html);
-});
+
 
 app.post('/submitUser', (req,res) => {
-    var username = req.body.username;
-    //var email = req.body.email;
+
+    var email = req.body.email;
     var password = req.body.password;
 
     var hashedPassword = bcrypt.hashSync(password, saltRounds);
 
-    users.push({ username: username, password: hashedPassword });
+    users.push({ email: email, password: hashedPassword });
 
     console.log(users);
 
     var usershtml = "";
     for (i = 0; i < users.length; i++) {
-        usershtml += "<li>" + users[i].username + ": " + users[i].password + "</li>";
+        usershtml += "<li>" + users[i].email + ": " + users[i].password + "</li>";
     }
 
     var html = "<ul>" + usershtml + "</ul>";
@@ -164,16 +243,19 @@ app.post('/submitUser', (req,res) => {
 });
 
 app.post('/loggingin', (req,res) => {
-    var username = req.body.username;
+    //var name = req.body.name;
+    var email = req.body.email;
     var password = req.body.password;
 
     var usershtml = "";
     for (i = 0; i < users.length; i++) {
-        if (users[i].username == username) {
+        if (users[i].email == email) {
             if (bcrypt.compareSync(password, users[i].password)) {
                 req.session.authenticated = true;
-                req.session.username = username;
+                req.session.email = email;
                 req.session.cookie.maxAge = expireTime;
+
+                console.log("Good login");
 
                 res.redirect('/loggedIn');
                 return;
@@ -182,6 +264,7 @@ app.post('/loggingin', (req,res) => {
     }
 
     //user and password combination not found
+    console.log("Bad login");
     res.redirect("/login");
 });
 
