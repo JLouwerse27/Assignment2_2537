@@ -1,3 +1,5 @@
+
+require('dotenv').config();
 const express = require("express");
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
@@ -15,11 +17,11 @@ const expireTime = 60 * 60 * 1000; //expires after 1 hour  (hours * minutes * se
 var users = []; 
 
 /* secret information section */
-const mongodb_user = "joseph2702";
-const mongodb_password = "Trooper27";
-const mongodb_session_secret = "10fc91a3-15d8-4739-a68b-8c4c640cf8ca";
+const mongodb_user = process.env.MONGODB_USER;
+const mongodb_password = process.env.MONGODB_PASSWORD;
+const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 
-const node_session_secret = "6aaa80f4-2f2d-45e7-9a16-44b7e60efb4c";
+const node_session_secret = process.env.NODE_SESSION_SECRET;
 /* END secret section */
 
 app.use(express.urlencoded({extended: false}));
@@ -40,8 +42,31 @@ app.use(session({
 ));
 
 app.get("/", (req, res) => {
-    res.send("<h1>Joseph's website</h1>");
+    var html = `
+    <form action='/signup' method='get'>
+        <button>Sign up</button>
+    </form>
+    <form action='/login' method='get'>
+        <button>Log in</button>
+    </form>
+    `;
+    res.send(html);
 });
+
+app.get("/signup", (req, res) => {
+    var html = `
+    signup dummy text
+    `;
+    res.send(html);
+});
+
+app.get("/login", (req, res) => {
+    var html = `
+    login dummy text
+    `;
+    res.send(html);
+});
+
 
 app.get("/about", (req, res) => {
     var color = req.query.color;
