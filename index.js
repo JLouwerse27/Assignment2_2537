@@ -7,7 +7,7 @@ const MongoStore = require("connect-mongo");
 const bcrypt = require("bcrypt");
 const saltRounds = 12;
 
-const port = process.env.PORT || 3005; //Childish Gambino
+const port = 3005; //Childish Gambino
 
 const app = express();
 
