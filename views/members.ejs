@@ -1,7 +1,6 @@
 <%- include("templates/header") %>
 
-<% if (auth) { %>
-    <h1> Hello,  <%= name %> </h1>
+    <!-- <h1> Hello,  <%= name %> </h1>
 
     <% if (meme == 1) { %>
         <br/> <img src='/breaking-bad-walter-white.gif' style='width:250px;'>
@@ -13,8 +12,16 @@
 
     <form action='/logout' method='get'>
     <button>Log out</button>
-    </form>
+    </form> -->
 
-<% } else { res.redirect("/"); } %>
+    <div class="col-1">
+      <br/> <img src='/corecore.webp' style='width:250px;'>
+    </div>
+    <div class="col-1">
+        <br/> <img src='/breaking-bad-walter-white.gif' style='width:250px;'>
+      </div>
+      <div class="col-1">
+        <br/> <img src='/i-love-undertime-slopper-undertime.gif' style='width:250px;'>
+      </div>
 
 <%- include("templates/footer") %>
