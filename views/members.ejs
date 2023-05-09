@@ -1,0 +1,20 @@
+<%- include("templates/header") %>
+
+<% if (auth) { %>
+    <h1> Hello,  <%= name %> </h1>
+
+    <% if (meme == 1) { %>
+        <br/> <img src='/breaking-bad-walter-white.gif' style='width:250px;'>
+    <% } else if (meme == 2) { %>
+        <br/> <img src='/i-love-undertime-slopper-undertime.gif' style='width:250px;'>
+    <% } else if (meme == 3) { %>
+        <br/> <img src='/corecore.webp' style='width:250px;'>
+    <% } %>
+
+    <form action='/logout' method='get'>
+    <button>Log out</button>
+    </form>
+
+<% } else { res.redirect("/"); } %>
+
+<%- include("templates/footer") %>
