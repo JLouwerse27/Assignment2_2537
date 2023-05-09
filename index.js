@@ -7,7 +7,7 @@ const MongoStore = require("connect-mongo");
 const bcrypt = require("bcrypt");
 const saltRounds = 12;
 
-const port = 3005; //Childish Gambino
+const port = 3002;
 
 const app = express();
 
@@ -29,6 +29,8 @@ var { database } = include("databaseConnection");
 
 const userCollection = database.db(mongodb_database).collection("users");
 
+app.set('view engine', 'ejs');
+
 app.use(express.urlencoded({ extended: false }));
 
 var mongoStore = MongoStore.create({
@@ -48,34 +50,38 @@ app.use(
 );
 
 app.get("/", (req, res) => {
-    var email = req.body.email;
-    var password = req.body.password;
 
-    var usershtml = "";
-    if (req.session.authenticated) {
-        var loggedhtml = "Hello, " + req.session.name;
-        loggedhtml += `
-        <form action='/members' method='get'>
-            <button>Go to members area</button>
-        </form>
-        <form action='/logout' method='get'>
-            <button>Log out</button>
-        </form>
-        `;
+    res.render("index", { auth: req.session.authenticated, name: req.session.name });
 
-        res.send(loggedhtml);
-        return;
-    } else {
-        var notloggedhtml = `
-        <form action='/signup' method='get'>
-            <button>Sign up</button>
-        </form>
-        <form action='/login' method='get'>
-            <button>Log in</button>
-        </form>
-        `;
-        res.send(notloggedhtml);
-    }
+    // var email = req.body.email;
+    // var password = req.body.password;
+
+
+    // var usershtml = "";
+    // if (req.session.authenticated) {
+    //     var loggedhtml = "Hello, " + req.session.name;
+    //     loggedhtml += `
+    //     <form action='/members' method='get'>
+    //         <button>Go to members area</button>
+    //     </form>
+    //     <form action='/logout' method='get'>
+    //         <button>Log out</button>
+    //     </form>
+    //     `;
+
+    //     res.send(loggedhtml);
+    //     return;
+    // } else {
+    //     var notloggedhtml = `
+    //     <form action='/signup' method='get'>
+    //         <button>Sign up</button>
+    //     </form>
+    //     <form action='/login' method='get'>
+    //         <button>Log in</button>
+    //     </form>
+    //     `;
+    //     res.send(notloggedhtml);
+    // }
 });
 
 app.get("/members", (req, res) => {
@@ -113,16 +119,7 @@ app.get("/logout", (req, res) => {
 });
 
 app.get("/signup", (req, res) => {
-    var html = `
-    create user
-    <form action='/submitsignup' method='post'>
-    <input name='name' type='text' placeholder='name'>
-    <input name='email' type='text' placeholder='email'>
-    <input name='password' type='password' placeholder='password'>
-    <button>Submit</button>
-    </form>
-    `;
-    res.send(html);
+    res.render("signup");
 });
 
 app.post("/redirectToSignup", (req, res) => {
