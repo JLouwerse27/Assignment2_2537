@@ -53,35 +53,6 @@ app.get("/", (req, res) => {
 
     res.render("index", { auth: req.session.authenticated, name: req.session.name });
 
-    // var email = req.body.email;
-    // var password = req.body.password;
-
-
-    // var usershtml = "";
-    // if (req.session.authenticated) {
-    //     var loggedhtml = "Hello, " + req.session.name;
-    //     loggedhtml += `
-    //     <form action='/members' method='get'>
-    //         <button>Go to members area</button>
-    //     </form>
-    //     <form action='/logout' method='get'>
-    //         <button>Log out</button>
-    //     </form>
-    //     `;
-
-    //     res.send(loggedhtml);
-    //     return;
-    // } else {
-    //     var notloggedhtml = `
-    //     <form action='/signup' method='get'>
-    //         <button>Sign up</button>
-    //     </form>
-    //     <form action='/login' method='get'>
-    //         <button>Log in</button>
-    //     </form>
-    //     `;
-    //     res.send(notloggedhtml);
-    // }
 });
 
 app.get("/members", (req, res) => {
@@ -140,14 +111,10 @@ app.post("/submitsignup", async (req, res) => {
     const validationResult = schema.validate({ name, email, password });
 
     if (validationResult.error != null) {
-        //    console.log(validationResult.error);
-        var badhtml = validationResult.error.message;
+        console.log(validationResult.error);
 
-        badhtml +=
-            "<form action='/redirectToSignup' method='post'>" +
-            "<button> Try again</button>" +
-            "</form>";
-        res.send(badhtml);
+        res.render("signupError", { errorMessage: validationResult.error.details[0].message } );
+
         return;
     }
 
@@ -168,15 +135,8 @@ app.post("/submitsignup", async (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-    var html = `
-    log in
-    <form action='/loggingin' method='post'>
-    <input name='email' type='text' placeholder='email'>
-    <input name='password' type='password' placeholder='password'>
-    <button>Submit</button>
-    </form>
-    `;
-    res.send(html);
+    
+    res.render("login");
 });
 
 app.post("/loggingin", async (req, res) => {
@@ -186,15 +146,11 @@ app.post("/loggingin", async (req, res) => {
     const schema = Joi.string().max(20).required();
     const validationResult = schema.validate(email);
 
-    //prob with validation: ex email 21 char long
+    //prob with validation: ex email 21 char long, missing email
     if (validationResult.error != null) {
-        var html = validationResult.error.message;
-        html +=
-        "<form action='/login' method='get'>"
-            +"<button>Try again</button>"
-        +"</form>";
-        res.send(html);
-        return;
+        console.log(validationResult.error);
+	   res.redirect("/login");
+	   return;
     }
 
     const result = await userCollection
@@ -204,7 +160,7 @@ app.post("/loggingin", async (req, res) => {
 
     if (result.length != 1) {
         console.log("user not found");
-        res.redirect("/login");
+        res.render("loggingin", { errorMessage:"Invalid email/password combination"});
         return;
     }
     if (await bcrypt.compare(password, result[0].password)) {
@@ -218,13 +174,8 @@ app.post("/loggingin", async (req, res) => {
         res.redirect("/members");
         return;
     } else {
-        console.log("incorrect password");
-        var html = "incorrect password";
-        html +=
-        "<form action='/login' method='get'>"
-            +"<button>Try again</button>"
-        +"</form>";
-        res.send(html);
+        console.log("Incorrect Password");
+        res.render("loggingin", { errorMessage:`Invalid email/password combination`});
         return;
     }
 });
@@ -233,27 +184,14 @@ app.get("/loggedin", (req, res) => {
     if (!req.session.authenticated) {
         res.redirect("/login");
     }
-    var html =
-        "You are logged in!" +
-        " <form action='/redirectToHome' method='post'>" +
-        "<button>Go Back Home </button>" +
-        "</form>";
-    res.send(html);
+    res.render("loggedin");
 });
 
 app.use(express.static(__dirname + "/public"));
 
 app.get("*", (req, res) => {
     res.status(404);
-    var html =
-        "<img src='/mike.avif' style='width:250px;'> <br/>" +
-        "404 Error. <br/> Hey, pal. Looks like you've found yourself in a bit of a situation here. The page you're looking for? Yeah, it's not here. Not anymore, at least. These things happen, you know, like a half measure gone wrong." +
-        "Now, I've seen my fair share of messes, but this one? It's not so bad. Just take a step back, gather yourself, and give it another shot. You might even find what you're looking for." +
-        "In the meantime, do yourself a favor and click that little button down there. It'll take you back to safety - a place where things make sense. And remember, kid: No more half measures." +
-        "<form action='/redirectToHome' method='post'>" +
-        "<button>Go Back Home </button>" +
-        "</form>";
-    res.send(html);
+    res.render("404");
 });
 
 app.post("/redirectToHome", (req, res) => {
